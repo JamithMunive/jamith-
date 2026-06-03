@@ -1,0 +1,115 @@
+from abc import ABC, abstractmethod
+
+
+class MetodoPago(ABC):
+
+    @abstractmethod
+    def procesar_pago(self, monto):
+        pass
+
+
+class TarjetaCredito(MetodoPago):
+
+    def __init__(self, numero_tarjeta, fecha_expiracion, codigo_seguridad):
+
+    
+        if len(numero_tarjeta) != 16 or not numero_tarjeta.isdigit():
+            raise ValueError("Número de tarjeta inválido.")
+
+        if len(codigo_seguridad) != 3 or not codigo_seguridad.isdigit():
+            raise ValueError("Código de seguridad inválido.")
+
+        self.numero_tarjeta = numero_tarjeta
+        self.fecha_expiracion = fecha_expiracion
+        self.codigo_seguridad = codigo_seguridad
+
+    def procesar_pago(self, monto):
+
+        if monto <= 0:
+            raise ValueError("El monto debe ser mayor a 0.")
+
+        return f"""
+===== PAGO CON TARJETA =====
+Pago realizado correctamente.
+Monto pagado: ${monto}
+Tarjeta terminada en: {self.numero_tarjeta[-4:]}
+"""
+
+
+class PayPal(MetodoPago):
+
+    def __init__(self, correo, saldo):
+
+        if "@" not in correo:
+            raise ValueError("Correo electrónico inválido.")
+
+        self.correo = correo
+        self.saldo = saldo
+
+    def procesar_pago(self, monto):
+
+        if monto <= 0:
+            raise ValueError("El monto debe ser mayor a 0.")
+
+        if monto > self.saldo:
+            raise Exception("Saldo insuficiente en PayPal.")
+
+        self.saldo -= monto
+
+        return f"""
+===== PAGO CON PAYPAL =====
+Pago realizado correctamente.
+Monto pagado: ${monto}
+Saldo restante: ${self.saldo}
+"""
+
+
+# --------------------------------
+# MENÚ INTERACTIVO
+# --------------------------------
+
+while True:
+
+    print("\n=== SISTEMA DE PAGOS ===")
+    print("1. Pagar con Tarjeta")
+    print("2. Pagar con PayPal")
+    print("3. Salir")
+
+    opcion = input("Seleccione una opción: ")
+
+    if opcion == "1":
+
+        try:
+            numero = input("Número de tarjeta (16 dígitos): ")
+            fecha = input("Fecha de expiración (MM/AA): ")
+            codigo = input("Código de seguridad (3 dígitos): ")
+            monto = float(input("Monto a pagar: "))
+
+            tarjeta = TarjetaCredito(numero, fecha, codigo)
+
+            print(tarjeta.procesar_pago(monto))
+
+        except Exception as e:
+            print("Error:", e)
+
+    elif opcion == "2":
+
+        try:
+            correo = input("Correo PayPal: ")
+            saldo = float(input("Saldo disponible: "))
+            monto = float(input("Monto a pagar: "))
+
+            paypal = PayPal(correo, saldo)
+
+            print(paypal.procesar_pago(monto))
+
+        except Exception as e:
+            print("Error:", e)
+
+    elif opcion == "3":
+
+        print("Programa finalizado.")
+        break
+
+    else:
+        print("Opción inválida.")
